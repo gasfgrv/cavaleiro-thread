@@ -1,23 +1,27 @@
 package gusto.fatec.cavaleiro.controller;
 
 import java.util.concurrent.Semaphore;
+import java.util.logging.Logger;
+
+import static java.lang.Math.random;
+import static java.text.MessageFormat.format;
 
 public class ThreadCavaleiro extends Thread {
 
-	private final int distanciaTotal = 2000;
+	private int portaEscolhida;
 
-	private static int portaEscolhida;
+	private boolean tocha = true;
+	private boolean pedra = true;
 
-	private static boolean tocha = true;
-	private static boolean pedra = true;
+	private static final int PORTA_DA_SALVACAO = (int) (1 + (random() * (4 - 1)));
 
-	private static int portaDaSalvacao = (int) (1 + (Math.random() * (4 - 1)));
+	private final int idCavaleiro;
 
-	private int idCavaleiro;
+	private final Semaphore semaforo;
 
-	private Semaphore semaforo;
+	private int distancia = (int) (2 + (random() * (4 - 2)));
 
-	private int distancia = (int) (2 + (Math.random() * (4 - 2)));
+	private static final Logger LOGGER = Logger.getLogger(ThreadCavaleiro.class.getName());
 
 	public ThreadCavaleiro(int idCavaleiro, Semaphore semaforo) {
 		this.idCavaleiro = idCavaleiro;
@@ -33,21 +37,24 @@ public class ThreadCavaleiro extends Thread {
 	private void cavaleiroAndando() {
 		int distanciaPecorrida = 0;
 
+		int distanciaTotal = 2000;
+
 		while (distanciaPecorrida < distanciaTotal) {
 			distanciaPecorrida += distancia;
 
 			try {
 				semaforo.acquire();
 
-				if (distanciaPecorrida >= 500 && tocha == true) {
+				if (distanciaPecorrida >= 500 && tocha) {
 					pegouTocha();
 				}
 
-				if (distanciaPecorrida >= 1500 && pedra == true) {
+				if (distanciaPecorrida >= 1500 && pedra) {
 					pegouPedra();
 				}
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
+				Thread.currentThread().interrupt();
 			} finally {
 				semaforo.release();
 			}
@@ -56,22 +63,26 @@ public class ThreadCavaleiro extends Thread {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				Thread.currentThread().interrupt();
 			}
 
-			System.out.println("Cavaleiro: #" + idCavaleiro + " andou " + distanciaPecorrida + "m");
+			String logCavaleiroAndou = format("Cavaleiro: #{0} andou {1}m", idCavaleiro, distanciaPecorrida);
+			LOGGER.info(logCavaleiroAndou);
 			distanciaPecorrida++;
 		}
 	}
 
 	private void pegouTocha() {
 		tocha = false;
-		System.out.println("Cavaleiro: #" + idCavaleiro + " pegou a tocha");
+		String logCavaleiroPegouTocha = format("Cavaleiro: #{0} pegou a tocha", idCavaleiro);
+		LOGGER.info(logCavaleiroPegouTocha);
 		distancia = distancia + 2;
 	}
 
 	private void pegouPedra() {
 		pedra = false;
-		System.out.println("Cavaleiro: #" + idCavaleiro + " pegou a pedra bilhante");
+		String logCavaleiroPegouPedra = format("Cavaleiro: #{0} pegou a pedra bilhante", idCavaleiro);
+		LOGGER.info(logCavaleiroPegouPedra);
 		distancia = distancia + 2;
 	}
 
@@ -80,14 +91,18 @@ public class ThreadCavaleiro extends Thread {
 			semaforo.acquire();
 			portaEscolhida++;
 
-			System.out.println("Cavaleiro: #" + idCavaleiro + " escolheu a porta #" + portaEscolhida);
-			if (portaEscolhida == portaDaSalvacao) {
-				System.out.println("Cavaleiro: #" + idCavaleiro + " se salvou");
+			String logCavaleiroEscolheuPorta = format("Cavaleiro: #{0} escolheu a porta #{1}", idCavaleiro, portaEscolhida);
+			LOGGER.info(logCavaleiroEscolheuPorta);
+			if (portaEscolhida == PORTA_DA_SALVACAO) {
+				String logCavaleiroSalvou = format("Cavaleiro: #{0} se salvou", idCavaleiro);
+				LOGGER.info(logCavaleiroSalvou);
 			} else {
-				System.out.println("Cavaleiro: #" + idCavaleiro + " morreu");
+				String logCavaleiroMorreu = format("Cavaleiro: #{0} morreu", idCavaleiro);
+				LOGGER.info(logCavaleiroMorreu);
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+			Thread.currentThread().interrupt();
 		} finally {
 			semaforo.release();
 		}
