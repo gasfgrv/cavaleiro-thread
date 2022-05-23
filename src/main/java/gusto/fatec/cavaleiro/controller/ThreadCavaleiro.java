@@ -8,21 +8,19 @@ import java.util.logging.Logger;
 import static java.text.MessageFormat.format;
 
 public class ThreadCavaleiro extends Thread {
-    private static final int PORTA_DA_SALVACAO = new Random().nextInt(4) + 1;
     private static final Logger LOGGER = Logger.getLogger(ThreadCavaleiro.class.getName());
+    private static final int PORTA_DA_SALVACAO = new Random().nextInt(4) + 1;
+    private static boolean tocha = true;
+    private static boolean pedra = true;
+    private static int portaEscolhida = 0;
     private int distancia;
     private final int idCavaleiro;
     private final Semaphore semaforo;
-    private int portaEscolhida;
-    private boolean tocha;
-    private boolean pedra;
+
 
     public ThreadCavaleiro(int idCavaleiro, Semaphore semaforo) {
         this.idCavaleiro = idCavaleiro;
         this.semaforo = semaforo;
-
-        this.tocha = true;
-        this.pedra = true;
 
         Random random = new Random();
         this.distancia = random.nextInt(3) + 2;
@@ -66,7 +64,7 @@ public class ThreadCavaleiro extends Thread {
         }
     }
 
-    private void pegouTocha(int distanciaPecorrida) {
+    private synchronized void pegouTocha(int distanciaPecorrida) {
         if (distanciaPecorrida >= 500 && tocha) {
             tocha = false;
 
@@ -77,7 +75,7 @@ public class ThreadCavaleiro extends Thread {
         }
     }
 
-    private void pegouPedra(int distanciaPecorrida) {
+    private synchronized void pegouPedra(int distanciaPecorrida) {
         if (distanciaPecorrida >= 1500 && pedra) {
             pedra = false;
 
@@ -88,11 +86,11 @@ public class ThreadCavaleiro extends Thread {
         }
     }
 
-    private void escolhePorta() {
+    private synchronized void escolhePorta() {
         try {
             semaforo.acquire();
 
-            portaEscolhida++;
+            portaEscolhida += 1;
 
             String logCavaleiroEscolheuPorta = format("Cavaleiro: #{0} escolheu a porta #{1}", idCavaleiro, portaEscolhida);
             LOGGER.info(logCavaleiroEscolheuPorta);
